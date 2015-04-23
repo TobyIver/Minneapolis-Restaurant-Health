@@ -44,7 +44,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class MainActivity extends Activity {
 
     //database Violation names
-    private static final String DB_NAME = "Health";
+    private static final String DB_NAME = "Health.jpg";
     private static final String TABLE_NAME = "inspections";
     private static final String vName = "NameofBusiness";
     private static final String vAdd = "LicenseAddress";
@@ -83,7 +83,7 @@ public class MainActivity extends Activity {
        ExternalDbOpenHelper dbOpenHelper = new ExternalDbOpenHelper(this, DB_NAME);
        database = dbOpenHelper.openDataBase();
 
-
+/*
         String fr = null;
 
         Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id, vName}//, vDate, vRisk,vCritical}
@@ -99,9 +99,9 @@ public class MainActivity extends Activity {
 
         Toast.makeText(getApplicationContext(), fr,
                 Toast.LENGTH_LONG).show();
-
+*/
 //location getter Todo turn on after testing done
-
+/*
         LocationManager locationManager = (LocationManager) getSystemService(
                 Context.LOCATION_SERVICE);
         LocationListener myLocationListener = new MyLocationListener();
@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
 
         progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
                 "Please wait...", true);
-
+*/
         // testing GPS cords
         latitude = String.valueOf(44.9757011);
         longitude = String.valueOf(-93.2728672);
@@ -153,9 +153,7 @@ public class MainActivity extends Activity {
             super.onPostExecute(result);
             assert result;
 
-            // testing GPS cords
-            latitude = String.valueOf(44.9757011);
-            longitude = String.valueOf(-93.2728672);
+
 
 
             query.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");

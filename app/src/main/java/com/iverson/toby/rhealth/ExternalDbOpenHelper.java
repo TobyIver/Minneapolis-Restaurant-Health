@@ -21,7 +21,7 @@ public class ExternalDbOpenHelper extends SQLiteOpenHelper {
     public static String DB_PATH;
 
     //Database file name
-    public static String DB_NAME;
+    public static String DB_NAME = "Health.db";
     public SQLiteDatabase database;
     public final Context context;
 
@@ -35,7 +35,7 @@ public class ExternalDbOpenHelper extends SQLiteOpenHelper {
         //Write a full path to the databases of your application
         String packageName = context.getPackageName();
         DB_PATH = String.format("//data//data//%s//databases//", packageName);
-        DB_NAME = databaseName;
+        //DB_NAME = databaseName;
         openDataBase();
     }
 
@@ -77,7 +77,7 @@ public class ExternalDbOpenHelper extends SQLiteOpenHelper {
     private void copyDataBase() throws IOException {
         //Open a stream for reading from our ready-made database
         //The stream source is located in the assets
-        InputStream externalDbStream = context.getAssets().open(DB_NAME);
+        InputStream externalDbStream = context.getAssets().open("Health.jpg");
 
         //Path to the created empty database on your Android device
         String outFileName = DB_PATH + DB_NAME;

@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 
 public class TestDatabaseActivity extends ListActivity {
+
+    /*
     private ViolationsDataSource datasource;
 
     @Override
@@ -68,5 +70,5 @@ public class TestDatabaseActivity extends ListActivity {
         datasource.close();
         super.onPause();
     }
-
+*/
 }
