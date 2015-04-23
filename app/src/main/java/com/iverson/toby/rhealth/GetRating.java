@@ -24,6 +24,8 @@ public class GetRating {
         }
 
 
+
+
         return rating;
     }
 }
