@@ -12,6 +12,7 @@ public class Violation {
     private String codeViolation="";
     private String violationText="";
     private String critical="";
+    private int rating;
 
     /************* Define Setter Methods *********/
 
@@ -46,6 +47,10 @@ public class Violation {
     public void setCritial(String a)
     {
         this.critical = a;
+    }
+    public void setRating(int a)
+    {
+        this.rating = a;
     }
 
 
@@ -87,6 +92,11 @@ public class Violation {
     public String getCritical()
     {
         return this.critical;
+    }
+
+    public int getRating()
+    {
+        return this.rating;
     }
 
 }
