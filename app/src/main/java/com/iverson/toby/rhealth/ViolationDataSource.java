@@ -74,19 +74,18 @@ public class ViolationDataSource {
         try {
             while ((line = buffer.readLine()) != null) {
                 String[] colums = line.split(",");
-                if (colums.length != 4) {
-                    Log.d("CSVParser", "Skipping Bad CSV Row");
-                    continue;
-                }
-                ContentValues cv = new ContentValues(3);
-                cv.put(MySQLiteHelper.COLUMN_Name, colums[0].trim());
-                cv.put(MySQLiteHelper.COLUMN_Address, colums[1].trim());
-                cv.put(MySQLiteHelper.COLUMN_Date, colums[2].trim());
-                cv.put(MySQLiteHelper.COLUMN_RiskLevel, colums[3].trim());
-                cv.put(MySQLiteHelper.COLUMN_ViolationText, colums[4].trim());
-                cv.put(MySQLiteHelper.COLUMN_CodeViolation, colums[4].trim());
-                cv.put(MySQLiteHelper.COLUMN_Critical, colums[4].trim());
-                cv.put(MySQLiteHelper.COLUMN_Rating, colums[4].trim());
+               // if (colums.length != 4) {
+               //     Log.d("CSVParser", "Skipping Bad CSV Row");
+              //     continue;
+              //  }
+                ContentValues cv = new ContentValues(7);
+                cv.put(MySQLiteHelper.COLUMN_Name, colums[4].trim());
+                cv.put(MySQLiteHelper.COLUMN_Address, colums[5].trim());
+                cv.put(MySQLiteHelper.COLUMN_Date, colums[8].trim());
+                cv.put(MySQLiteHelper.COLUMN_RiskLevel, colums[10].trim());
+                cv.put(MySQLiteHelper.COLUMN_ViolationText, colums[12].trim());
+                cv.put(MySQLiteHelper.COLUMN_CodeViolation, colums[11].trim());
+                cv.put(MySQLiteHelper.COLUMN_Critical, colums[13].trim());
                 database.insert(MySQLiteHelper.TABLE_Name, null, cv);
             }
         } catch (IOException e) {

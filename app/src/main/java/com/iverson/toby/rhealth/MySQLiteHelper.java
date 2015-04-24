@@ -28,7 +28,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_Critical = "critical";
     public static final String COLUMN_Rating = "rating";
 
-    private static final String DATABASE_NAME = "RHealthIn.db";
+    public static final String DATABASE_NAME = "RHealthIn.db";
     private static final int DATABASE_VERSION = 1;
 
     // Database creation sql statement

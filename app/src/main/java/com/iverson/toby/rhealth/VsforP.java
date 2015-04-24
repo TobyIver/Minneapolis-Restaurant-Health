@@ -25,8 +25,8 @@ public class VsforP {
 
     public static ArrayList<Violation> get(Place p) {
         ArrayList<Violation> vs = null;
-        ExternalDbOpenHelper dbOpenHelper = new ExternalDbOpenHelper(c, DB_NAME);
-        database = dbOpenHelper.openDataBase();
+       // ExternalDbOpenHelper dbOpenHelper = new ExternalDbOpenHelper(c, DB_NAME);
+       // database = dbOpenHelper.openDataBase();
 
 
 

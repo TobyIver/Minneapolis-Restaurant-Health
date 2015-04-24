@@ -43,17 +43,18 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends Activity {
 
-    //database Violation names
-    private static final String DB_NAME = "Health.jpg";
-    private static final String TABLE_NAME = "inspections";
-    private static final String vName = "NameofBusiness";
-    private static final String vAdd = "LicenseAddress";
-    private static final String vDate = "DateofInspection";
-    private static final String vRisk = "RiskLevel";
-    private static final String vCode = "CodeSection";
-    private static final String vCodeText = "StandardOrderText";
-    private static final String vCritical = "Critical";
-    private static final String v_id = "_id";
+    //database Violation names from helper
+    private static final String DB_NAME = MySQLiteHelper.DATABASE_NAME;
+    private static final String TABLE_NAME = MySQLiteHelper.TABLE_Name;
+    private static final String vName = MySQLiteHelper.COLUMN_Name;
+    private static final String vAdd = MySQLiteHelper.COLUMN_Address;
+    private static final String vDate = MySQLiteHelper.COLUMN_Date;
+    private static final String vRisk = MySQLiteHelper.COLUMN_RiskLevel;
+    private static final String vCode = MySQLiteHelper.COLUMN_CodeViolation;
+    private static final String vCodeText = MySQLiteHelper.COLUMN_ViolationText;
+    private static final String vCritical = MySQLiteHelper.COLUMN_Critical;
+    private static final String v_id = MySQLiteHelper.COLUMN_ID;
+    private static final String vRating = MySQLiteHelper.COLUMN_Rating;
     private SQLiteDatabase database;
 
     private ViolationDataSource datasource;
@@ -84,11 +85,12 @@ public class MainActivity extends Activity {
         datasource = new ViolationDataSource(this);
         datasource.open();
 
-/*
+
+
         String fr = null;
 
-        Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id, vName}//, vDate, vRisk,vCritical}
-                , vName + " = CAPITAL GRILLE"  , null, null, null, null);
+        Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id, vName}
+                , v_id + "1"  , null, null, null, null);
         friendCursor.moveToFirst();
         if(!friendCursor.isAfterLast()) {
             do {
@@ -100,7 +102,7 @@ public class MainActivity extends Activity {
 
         Toast.makeText(getApplicationContext(), fr,
                 Toast.LENGTH_LONG).show();
-*/
+
 //location getter Todo turn on after testing done
 /*
         LocationManager locationManager = (LocationManager) getSystemService(
