@@ -3,10 +3,17 @@ package com.iverson.toby.rhealth;
 /**
  * Created by Toby on 4/23/2015.
  */
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class MySQLiteHelper extends SQLiteOpenHelper {
 
@@ -38,8 +45,11 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_Rating + " test" +
             ");";
 
-    public MySQLiteHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    public Context context;
+
+    public MySQLiteHelper(Context c) {
+        super(c, DATABASE_NAME, null, DATABASE_VERSION);
+        context = c;
     }
 
     @Override
@@ -47,6 +57,7 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
         database.execSQL(DATABASE_CREATE);
 
 
+        // puts data into database
 
     }
 

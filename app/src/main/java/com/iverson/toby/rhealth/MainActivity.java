@@ -56,6 +56,8 @@ public class MainActivity extends Activity {
     private static final String v_id = "_id";
     private SQLiteDatabase database;
 
+    private ViolationDataSource datasource;
+
 
 
     //GPS and Google Places variables
@@ -78,10 +80,9 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.httptestlist);
 
-//Loads inspections into database
 
-       ExternalDbOpenHelper dbOpenHelper = new ExternalDbOpenHelper(this, DB_NAME);
-       database = dbOpenHelper.openDataBase();
+        datasource = new ViolationDataSource(this);
+        datasource.open();
 
 /*
         String fr = null;
