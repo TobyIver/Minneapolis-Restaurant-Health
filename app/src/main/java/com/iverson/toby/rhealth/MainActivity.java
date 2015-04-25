@@ -86,7 +86,7 @@ public class MainActivity extends Activity {
         datasource.open();
 
 
-
+/*
         String fr = null;
 
         Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id, vName}
@@ -102,9 +102,9 @@ public class MainActivity extends Activity {
 
         Toast.makeText(getApplicationContext(), fr,
                 Toast.LENGTH_LONG).show();
-
+*/
 //location getter Todo turn on after testing done
-/*
+
         LocationManager locationManager = (LocationManager) getSystemService(
                 Context.LOCATION_SERVICE);
         LocationListener myLocationListener = new MyLocationListener();
@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
 
         progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
                 "Please wait...", true);
-*/
+
         // testing GPS cords
         latitude = String.valueOf(44.9757011);
         longitude = String.valueOf(-93.2728672);
