@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
 
     private ViolationDataSource datasource;
 
-
+    private StringBuilder queryViolation = new StringBuilder();
 
     //GPS and Google Places variables
     private String latitude;
@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
     private final String APIKEY = "AIzaSyAMfjDmxGTWke6GgwZS0RbG3zg1Jjl1mtg";
     private final int radius = 2000;
     private String type = "food";
-    private StringBuilder query = new StringBuilder();
+    private StringBuilder queryGoogle = new StringBuilder();
     private ArrayList<Place> places = new ArrayList<Place>();
     private ListView listView;
     MyLocation myLocation = new MyLocation();
@@ -80,30 +80,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.httptestlist);
-
-
-        datasource = new ViolationDataSource(this);
-        datasource.open();
-
-
-/*
-        String fr = null;
-
-        Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id, vName}
-                , v_id + "1"  , null, null, null, null);
-        friendCursor.moveToFirst();
-        if(!friendCursor.isAfterLast()) {
-            do {
-                String name = friendCursor.getString(1);
-                fr = fr + name + " ";
-            } while (friendCursor.moveToNext());
-        }
-        friendCursor.close();
-
-        Toast.makeText(getApplicationContext(), fr,
-                Toast.LENGTH_LONG).show();
-*/
-//location getter Todo turn on after testing done
 
         LocationManager locationManager = (LocationManager) getSystemService(
                 Context.LOCATION_SERVICE);
@@ -126,7 +102,7 @@ public class MainActivity extends Activity {
         progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
                 "Please wait...", true);
 
-        // testing GPS cords
+ //Todo testing GPS cords
         latitude = String.valueOf(44.9757011);
         longitude = String.valueOf(-93.2728672);
     }
@@ -159,13 +135,13 @@ public class MainActivity extends Activity {
 
 
 
-            query.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
-            query.append("location=" +  latitude + "," + longitude + "&");
-            query.append("radius=" + radius + "&");
-            query.append("types=" + type + "&");
-            query.append("sensor=true&"); //Must be true if queried from a device with GPS
-            query.append("key=" + APIKEY);
-            new QueryGooglePlaces().execute(query.toString());
+            queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
+            queryGoogle.append("location=" +  latitude + "," + longitude + "&");
+            queryGoogle.append("radius=" + radius + "&");
+            queryGoogle.append("types=" + type + "&");
+            queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
+            queryGoogle.append("key=" + APIKEY);
+            new QueryGooglePlaces().execute(queryGoogle.toString());
         }
     }
 
@@ -253,25 +229,7 @@ public class MainActivity extends Activity {
                         String paddress = place.getVicinity();
                         paddress = paddress.toUpperCase();
                         paddress= paddress.substring(0, paddress.indexOf(" "));
-/*
 
-                        String fr = null;
-
-                        Cursor friendCursor = database.query(TABLE_NAME, new String[] {v_id}//, vDate, vRisk,vCritical}
-                                , vName + " = " + pname + " AND " + vAdd + " = " + paddress , null, null, null, null);
-                        friendCursor.moveToFirst();
-                        if(!friendCursor.isAfterLast()) {
-                            do {
-                                String name = friendCursor.getString(1);
-                                fr = fr + name + " ";
-                            } while (friendCursor.moveToNext());
-                        }
-                        friendCursor.close();
-
-                        Toast.makeText(getApplicationContext(), fr,
-                                Toast.LENGTH_LONG).show();
-
-*/
 
                     }
                 }

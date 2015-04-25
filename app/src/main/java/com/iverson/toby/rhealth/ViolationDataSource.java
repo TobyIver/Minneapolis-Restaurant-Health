@@ -59,7 +59,7 @@ public class ViolationDataSource {
 */
     public void initiate(Context context) {
 
-        String mCSVfile = "Inspections.csv";
+        String mCSVfile = "Inspec.csv";
         AssetManager manager = context.getAssets();
         InputStream inStream = null;
         try {
@@ -79,13 +79,13 @@ public class ViolationDataSource {
               //     continue;
               //  }
                 ContentValues cv = new ContentValues(7);
-                cv.put(MySQLiteHelper.COLUMN_Name, colums[4].trim());
-                cv.put(MySQLiteHelper.COLUMN_Address, colums[5].trim());
-                cv.put(MySQLiteHelper.COLUMN_Date, colums[8].trim());
-                cv.put(MySQLiteHelper.COLUMN_RiskLevel, colums[10].trim());
-                cv.put(MySQLiteHelper.COLUMN_ViolationText, colums[12].trim());
-                cv.put(MySQLiteHelper.COLUMN_CodeViolation, colums[11].trim());
-                cv.put(MySQLiteHelper.COLUMN_Critical, colums[13].trim());
+                cv.put(MySQLiteHelper.COLUMN_Name, colums[0].trim());
+                cv.put(MySQLiteHelper.COLUMN_Address, colums[1].trim());
+                cv.put(MySQLiteHelper.COLUMN_Date, colums[3].trim());
+                cv.put(MySQLiteHelper.COLUMN_RiskLevel, colums[4].trim());
+                cv.put(MySQLiteHelper.COLUMN_ViolationText, colums[6].trim());
+                cv.put(MySQLiteHelper.COLUMN_CodeViolation, colums[5].trim());
+                cv.put(MySQLiteHelper.COLUMN_Critical, colums[7].trim());
                 database.insert(MySQLiteHelper.TABLE_Name, null, cv);
             }
         } catch (IOException e) {

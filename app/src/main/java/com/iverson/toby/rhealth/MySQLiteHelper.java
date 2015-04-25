@@ -56,8 +56,41 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase database) {
         database.execSQL(DATABASE_CREATE);
 
+        String mCSVfile = "Inspec.csv";
+        AssetManager manager = context.getAssets();
+        InputStream inStream = null;
+        try {
+            inStream = manager.open(mCSVfile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // puts data into database
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(inStream));
+        String line = "";
+        database.beginTransaction();
+        try {
+            while ((line = buffer.readLine()) != null) {
+                String[] colums = line.split(",");
+                // if (colums.length != 4) {
+                //     Log.d("CSVParser", "Skipping Bad CSV Row");
+                //     continue;
+                //  }
+                ContentValues cv = new ContentValues(6);
+                cv.put(MySQLiteHelper.COLUMN_Name, colums[0].trim());
+                //cv.put(MySQLiteHelper.COLUMN_Address, colums[1].trim().replaceAll("\"", ""));
+                cv.put(MySQLiteHelper.COLUMN_Date, colums[2].trim());
+                cv.put(MySQLiteHelper.COLUMN_RiskLevel, colums[3].trim());
+                //cv.put(MySQLiteHelper.COLUMN_ViolationText, colums[5].trim().replaceAll("\"", ""));
+                cv.put(MySQLiteHelper.COLUMN_CodeViolation, colums[4].trim());
+                cv.put(MySQLiteHelper.COLUMN_Critical, colums[6].trim());
+                database.insert(MySQLiteHelper.TABLE_Name, null, cv);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        database.setTransactionSuccessful();
+        database.endTransaction();
+
 
     }
 
