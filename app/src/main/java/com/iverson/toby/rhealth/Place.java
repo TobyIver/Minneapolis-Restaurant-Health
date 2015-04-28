@@ -13,6 +13,8 @@ public class Place {
     public float rating;
     public String reference;
     public String[] types;
+    public int violationRating;
+
 
     public String getVicinity() {
         return vicinity;
@@ -69,4 +71,9 @@ public class Place {
     public void setTypes(String[] types) {
         this.types = types;
     }
+
+    public int getVRating() { return violationRating; }
+
+    public void setVRating(int i) {this.violationRating = i;}
+
 }

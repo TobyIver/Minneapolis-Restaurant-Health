@@ -69,7 +69,10 @@ public class MainActivity extends Activity {
     private final int radius = 2000;
     private String type = "food";
     private StringBuilder queryGoogle = new StringBuilder();
+    private StringBuilder queryHealth = new StringBuilder();
     private ArrayList<Place> places = new ArrayList<Place>();
+    private ArrayList<Integer> placeRatings = new ArrayList<Integer>();
+    private ArrayList<Violation> violations = new ArrayList<Violation>();
     private ListView listView;
     MyLocation myLocation = new MyLocation();
     MyLocation.LocationResult locationResult;
@@ -131,8 +134,6 @@ public class MainActivity extends Activity {
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             assert result;
-
-
 
 
             queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
@@ -215,20 +216,59 @@ public class MainActivity extends Activity {
                         place.setReference(reference.getTextContent());
                         place.setGeometry(geometry);
                         place.setTypes(types);
-                        places.add(place);
-
-                        //todo where VSforP is handled
 
 
+
+
+                        // reformating name for use in violations
                         String pname = place.getName();
                         pname = pname.toUpperCase();
 
+                        // running name violation query
+                        queryHealth = new StringBuilder();
+                        queryHealth.append("https://communities.socrata.com/resource/nzdy-gqv2.xml");
+                        queryHealth.append("?$where=starts_with(name_of_business, '");
+                        queryHealth.append(pname + "')");
 
+                        new HealthCompare().execute(queryHealth.toString());
 
-
+                        //verify violation results to prevent errors
                         String paddress = place.getVicinity();
                         paddress = paddress.toUpperCase();
                         paddress= paddress.substring(0, paddress.indexOf(" "));
+
+
+                        for (int ii = 0; ii > violations.size(); ii++) {
+                            Violation v = violations.get(ii);
+                            String vaddress = v.getAddress();
+                            vaddress = vaddress.substring(0, vaddress.indexOf(" "));
+                            if ( v.getAddress() != vaddress){
+                                violations.remove(ii);
+                                ii = ii-1;
+                            }
+
+                        }
+
+
+
+                        // Rates the violations for location
+                        int xrating = 100;
+
+                        for (int ii = 0; ii > violations.size(); ii++) {
+                                Violation v = violations.get(ii);
+                                int r = 0;
+                                r = 2 * (4 - Integer.parseInt(v.getRiskLevel()));  //risk levels 1-3, 1 being worse
+                                if (v.getCritical() == "Yes") {
+                                    r = r * 5;
+                                }
+                                xrating = xrating - r;
+                        }
+                        place.setVRating(xrating);
+                        //saves place
+                        places.add(place);
+
+
+
 
 
                     }
@@ -277,14 +317,85 @@ public class MainActivity extends Activity {
                     name.setText(place.getName());
                 }
                 if(null != vicinity) {
-                    vicinity.setText(place.getVicinity());
+                    //todo change back to vicinity
+                    vicinity.setText(place.getVRating());
                 }
             }
             return row;
         }
     }
 
+    // Pulls health inspection data from API
+    public class HealthCompare extends AsyncTask<String, String, String>  {
 
+        @Override
+        protected String doInBackground(String... args) {
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpResponse response;
+            String responseString = null;
+            try {
+                response = httpclient.execute(new HttpGet(args[0]));
+                StatusLine statusLine = response.getStatusLine();
+                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(out);
+                    out.close();
+                    responseString = out.toString();
+                } else {
+                    //Closes the connection.
+                    response.getEntity().getContent().close();
+                    throw new IOException(statusLine.getReasonPhrase());
+                }
+            } catch (ClientProtocolException e) {
+                Log.e("ERROR", e.getMessage());
+            } catch (IOException e) {
+                Log.e("ERROR", e.getMessage());
+            }
+            return responseString;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+             violations = new ArrayList<>();
+
+
+            try {
+                Document xmlResult = MainActivity.loadXMLFromString(result);//Might have  to move load
+                NodeList nodeList =  xmlResult.getElementsByTagName("result");
+                for(int i = 0, length = nodeList.getLength(); i < length; i++) {
+                    Node node = nodeList.item(i);
+                    if (node.getNodeType() == Node.ELEMENT_NODE) {
+                        Element nodeElement = (Element) node;
+                        Violation violation = new Violation();
+                        //Node name = nodeElement.getElementsByTagName("name_of_business").item(0);
+                        Node address = nodeElement.getElementsByTagName("license_address").item(0);
+                        //Node date = nodeElement.getElementsByTagName("date_of_inspection").item(0);
+                        Node riskLevel = nodeElement.getElementsByTagName("risk_level").item(0);
+                        //Node violationText = nodeElement.getElementsByTagName("standard_order_text").item(0);
+                        //Node codeViolation = nodeElement.getElementsByTagName("code_section").item(0);
+                        Node critical = nodeElement.getElementsByTagName("critical").item(0);
+
+                        //violation.setName(name.getTextContent());
+                        violation.setAddress(address.getTextContent());
+                        //violation.setDate(date.getTextContent());
+                        violation.setRiskLevel(riskLevel.getTextContent());
+                        //violation.setViolationText(violationText.getTextContent());
+                        //violation.setCodeViolation(codeViolation.getTextContent());
+                        violation.setCritial(critical.getTextContent());
+
+
+                        violations.add(violation);
+                    }
+                }
+
+            } catch (Exception e) {
+                Log.e("ERROR", e.getMessage());
+            }
+
+
+        }
+    }
 
 
 
