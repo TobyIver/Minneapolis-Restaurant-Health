@@ -33,11 +33,23 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.security.KeyStore;
 import java.util.ArrayList;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -98,6 +110,12 @@ public class MainActivity extends Activity {
             }
         };
 
+//Todo testing GPS cords
+        latitude = String.valueOf(44.9757011);
+        longitude = String.valueOf(-93.2728672);
+
+
+
 
         MyRunnable myRun = new MyRunnable();
         myRun.run();
@@ -105,9 +123,7 @@ public class MainActivity extends Activity {
         progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
                 "Please wait...", true);
 
- //Todo testing GPS cords
-        latitude = String.valueOf(44.9757011);
-        longitude = String.valueOf(-93.2728672);
+
     }
 
     public static Document loadXMLFromString(String xml) throws Exception {
@@ -153,6 +169,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected String doInBackground(String... args) {
+
             HttpClient httpclient = new DefaultHttpClient();
             HttpResponse response;
             String responseString = null;
@@ -175,6 +192,8 @@ public class MainActivity extends Activity {
                 Log.e("ERROR", e.getMessage());
             }
             return responseString;
+
+
         }
 
         @Override
@@ -216,7 +235,7 @@ public class MainActivity extends Activity {
                         place.setReference(reference.getTextContent());
                         place.setGeometry(geometry);
                         place.setTypes(types);
-
+                        //places.add(place);
 
 
 
@@ -230,7 +249,10 @@ public class MainActivity extends Activity {
                         queryHealth.append("?$where=starts_with(name_of_business, '");
                         queryHealth.append(pname + "')");
 
-                        new HealthCompare().execute(queryHealth.toString());
+                        String qHealth = queryHealth.toString();
+                        qHealth = qHealth.replaceAll(" ", "%20");
+
+                        new HealthCompare().execute(qHealth);
 
                         //verify violation results to prevent errors
                         String paddress = place.getVicinity();
@@ -273,8 +295,10 @@ public class MainActivity extends Activity {
 
                     }
                 }
+
+
                 /**** Puts places into listview doesn't work****/
-                PlaceAdapter placeAdapter = new PlaceAdapter(MainActivity.this, R.layout.activity_main, places);
+               PlaceAdapter placeAdapter = new PlaceAdapter(MainActivity.this, R.layout.activity_main, places);
                 listView = (ListView)findViewById(R.id.httptestlist_listview);
                 listView.setAdapter(placeAdapter);
 
@@ -317,8 +341,9 @@ public class MainActivity extends Activity {
                     name.setText(place.getName());
                 }
                 if(null != vicinity) {
+
                     //todo change back to vicinity
-                    vicinity.setText(place.getVRating());
+                    vicinity.setText(Integer.toString(place.getVRating()));
                 }
             }
             return row;
@@ -331,19 +356,19 @@ public class MainActivity extends Activity {
         @Override
         protected String doInBackground(String... args) {
             HttpClient httpclient = new DefaultHttpClient();
-            HttpResponse response;
+            HttpResponse hresponse;
             String responseString = null;
             try {
-                response = httpclient.execute(new HttpGet(args[0]));
-                StatusLine statusLine = response.getStatusLine();
+                hresponse = httpclient.execute(new HttpGet(args[0]));
+                StatusLine statusLine = hresponse.getStatusLine();
                 if(statusLine.getStatusCode() == HttpStatus.SC_OK){
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    response.getEntity().writeTo(out);
+                    hresponse.getEntity().writeTo(out);
                     out.close();
                     responseString = out.toString();
                 } else {
                     //Closes the connection.
-                    response.getEntity().getContent().close();
+                    hresponse.getEntity().getContent().close();
                     throw new IOException(statusLine.getReasonPhrase());
                 }
             } catch (ClientProtocolException e) {
