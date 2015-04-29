@@ -34,9 +34,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -111,8 +113,8 @@ public class MainActivity extends Activity {
         };
 
 //Todo testing GPS cords
-        latitude = String.valueOf(44.9757011);
-        longitude = String.valueOf(-93.2728672);
+        //latitude = String.valueOf(44.9757011);
+        //longitude = String.valueOf(-93.2728672);
 
 
 
@@ -202,7 +204,7 @@ public class MainActivity extends Activity {
             try {
                 Document xmlResult = loadXMLFromString(result);
                 NodeList nodeList =  xmlResult.getElementsByTagName("result");
-                for(int i = 0, length = nodeList.getLength(); i < length; i++) {
+                for(int i = 0, length = nodeList.getLength(); i <= length-length; i++) { //todo change back
                     Node node = nodeList.item(i);
                     if(node.getNodeType() == Node.ELEMENT_NODE) {
                         Element nodeElement = (Element) node;
@@ -245,14 +247,24 @@ public class MainActivity extends Activity {
 
                         // running name violation query
                         queryHealth = new StringBuilder();
-                        queryHealth.append("https://communities.socrata.com/resource/nzdy-gqv2.xml");
-                        queryHealth.append("?$where=starts_with(name_of_business, '");
+                        queryHealth.append("http://communities.socrata.com/resource/nzdy-gqv2.xml");
+                        queryHealth.append("?$where=starts_with(name_of_business,'");
                         queryHealth.append(pname + "')");
 
                         String qHealth = queryHealth.toString();
                         qHealth = qHealth.replaceAll(" ", "%20");
 
-                        new HealthCompare().execute(qHealth);
+                       // new HealthCompare().execute(qHealth);
+
+
+                        MyRunnable myRun = new MyRunnable();
+                        myRun.run();
+
+                        progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
+                                "Please wait...", true);
+
+
+
 
                         //verify violation results to prevent errors
                         String paddress = place.getVicinity();
@@ -355,7 +367,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected String doInBackground(String... args) {
-            HttpClient httpclient = new DefaultHttpClient();
+  /*          HttpClient httpclient = new DefaultHttpClient();
             HttpResponse hresponse;
             String responseString = null;
             try {
@@ -377,6 +389,39 @@ public class MainActivity extends Activity {
                 Log.e("ERROR", e.getMessage());
             }
             return responseString;
+    */
+
+            StringBuilder response  = new StringBuilder();
+            String surl = args[0];
+            URL url = null;
+            try {
+                url = new URL(surl);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            HttpURLConnection httpconn = null;
+            try {
+                httpconn = (HttpURLConnection)url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                if (httpconn.getResponseCode() == HttpURLConnection.HTTP_OK)
+                {
+                    BufferedReader input = new BufferedReader(new InputStreamReader(httpconn.getInputStream()),8192);
+                    String strLine = null;
+                    while ((strLine = input.readLine()) != null)
+                    {
+                        response.append(strLine);
+                    }
+                    input.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return response.toString();
+
+
         }
 
         @Override
@@ -387,35 +432,40 @@ public class MainActivity extends Activity {
 
             try {
                 Document xmlResult = MainActivity.loadXMLFromString(result);//Might have  to move load
-                NodeList nodeList =  xmlResult.getElementsByTagName("result");
-                for(int i = 0, length = nodeList.getLength(); i < length; i++) {
-                    Node node = nodeList.item(i);
+                NodeList nodeList1 =  xmlResult.getElementsByTagName("row");
+                Node node1 = nodeList1.item(0);
+                Element nodeElement1 = (Element) node1;
+                Node node2 = nodeElement1.getElementsByTagName("row").item(0);
+                NodeList nodeList2 = node2.getChildNodes();
+                //row nested in row......
+
+
+                for(int i = 0, length = nodeList2.getLength(); i < length; i++) {
+                    Node node = nodeList2.item(i);
                     if (node.getNodeType() == Node.ELEMENT_NODE) {
                         Element nodeElement = (Element) node;
                         Violation violation = new Violation();
-                        //Node name = nodeElement.getElementsByTagName("name_of_business").item(0);
+                        Node name = nodeElement.getElementsByTagName("name_of_business").item(0);
                         Node address = nodeElement.getElementsByTagName("license_address").item(0);
-                        //Node date = nodeElement.getElementsByTagName("date_of_inspection").item(0);
+                        Node date = nodeElement.getElementsByTagName("date_of_inspection").item(0);
                         Node riskLevel = nodeElement.getElementsByTagName("risk_level").item(0);
-                        //Node violationText = nodeElement.getElementsByTagName("standard_order_text").item(0);
-                        //Node codeViolation = nodeElement.getElementsByTagName("code_section").item(0);
+                        Node violationText = nodeElement.getElementsByTagName("standard_order_text").item(0);
+                        Node codeViolation = nodeElement.getElementsByTagName("code_section").item(0);
                         Node critical = nodeElement.getElementsByTagName("critical").item(0);
-
-                        //violation.setName(name.getTextContent());
+/*
+                        violation.setName(name.getTextContent());
                         violation.setAddress(address.getTextContent());
-                        //violation.setDate(date.getTextContent());
+                        violation.setDate(date.getTextContent());
                         violation.setRiskLevel(riskLevel.getTextContent());
-                        //violation.setViolationText(violationText.getTextContent());
-                        //violation.setCodeViolation(codeViolation.getTextContent());
+                        violation.setViolationText(violationText.getTextContent());
+                        violation.setCodeViolation(codeViolation.getTextContent());
                         violation.setCritial(critical.getTextContent());
-
-
-                        violations.add(violation);
+*/
                     }
                 }
 
             } catch (Exception e) {
-                Log.e("ERROR", e.getMessage());
+                Log.e("ERROR here", e.getMessage());
             }
 
 

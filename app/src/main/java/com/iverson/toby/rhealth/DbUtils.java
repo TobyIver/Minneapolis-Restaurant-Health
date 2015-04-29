@@ -3,6 +3,9 @@ package com.iverson.toby.rhealth;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
