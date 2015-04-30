@@ -4,6 +4,7 @@ package com.iverson.toby.rhealth;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -84,7 +86,8 @@ public class MainActivity extends Activity {
     private String type = "food";
     private StringBuilder queryGoogle = new StringBuilder();
     private StringBuilder queryHealth = new StringBuilder();
-    private ArrayList<Place> places = new ArrayList<Place>();
+    public ArrayList<Place> places = new ArrayList<Place>();
+    public Place placeItem = new Place();
     private ArrayList<Integer> placeRatings = new ArrayList<Integer>();
     private ArrayList<Violation> violations = new ArrayList<Violation>();
     private ListView listView;
@@ -112,11 +115,9 @@ public class MainActivity extends Activity {
             }
         };
 
-//Todo testing GPS cords
-        //latitude = String.valueOf(44.9757011);
-        //longitude = String.valueOf(-93.2728672);
-
-
+        //Todo testing GPS cords
+        latitude = String.valueOf(44.9757011);
+        longitude = String.valueOf(-93.2728672);
 
 
         MyRunnable myRun = new MyRunnable();
@@ -124,6 +125,15 @@ public class MainActivity extends Activity {
 
         progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
                 "Please wait...", true);
+
+        queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
+        queryGoogle.append("location=" +  latitude + "," + longitude + "&");
+        queryGoogle.append("radius=" + radius + "&");
+        queryGoogle.append("types=" + type + "&");
+        queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
+        queryGoogle.append("key=" + APIKEY);
+        new QueryGooglePlaces().execute(queryGoogle.toString());
+
 
 
     }
@@ -153,7 +163,7 @@ public class MainActivity extends Activity {
             super.onPostExecute(result);
             assert result;
 
-
+/*
             queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
             queryGoogle.append("location=" +  latitude + "," + longitude + "&");
             queryGoogle.append("radius=" + radius + "&");
@@ -161,6 +171,7 @@ public class MainActivity extends Activity {
             queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
             queryGoogle.append("key=" + APIKEY);
             new QueryGooglePlaces().execute(queryGoogle.toString());
+            */
         }
     }
 
@@ -204,7 +215,7 @@ public class MainActivity extends Activity {
             try {
                 Document xmlResult = loadXMLFromString(result);
                 NodeList nodeList =  xmlResult.getElementsByTagName("result");
-                for(int i = 0, length = nodeList.getLength(); i <= length-length; i++) { //todo change back
+                for(int i = 0, length = nodeList.getLength(); i < length; i++) { //todo change back
                     Node node = nodeList.item(i);
                     if(node.getNodeType() == Node.ELEMENT_NODE) {
                         Element nodeElement = (Element) node;
@@ -254,14 +265,9 @@ public class MainActivity extends Activity {
                         String qHealth = queryHealth.toString();
                         qHealth = qHealth.replaceAll(" ", "%20");
 
-                       // new HealthCompare().execute(qHealth);
 
 
-                        MyRunnable myRun = new MyRunnable();
-                        myRun.run();
 
-                        progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
-                                "Please wait...", true);
 
 
 
@@ -309,10 +315,33 @@ public class MainActivity extends Activity {
                 }
 
 
-                /**** Puts places into listview doesn't work****/
+
                PlaceAdapter placeAdapter = new PlaceAdapter(MainActivity.this, R.layout.activity_main, places);
                 listView = (ListView)findViewById(R.id.httptestlist_listview);
-                listView.setAdapter(placeAdapter);
+
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int pos,
+                                            long id) {
+                        //int position = places.size() - pos -1;
+                         placeItem = places.get(pos-1);
+
+                        //TextView itemName = (TextView) findViewById(R.id.item_name);
+                        //TextView itemVicinity = (TextView) findViewById(R.id.item_vicinity);
+                        //TextView itemVRating = (TextView) findViewById(R.id.item_vrating);
+
+
+                        //itemName.setText(placeItem.getName());
+                        //itemVicinity.setText(placeItem.getVicinity());
+
+                        setContentView(R.layout.item_selected);
+
+
+                    }
+                });
+
+
+               listView.setAdapter(placeAdapter);
 
             } catch (Exception e) {
                 Log.e("ERROR", e.getMessage());
@@ -321,6 +350,8 @@ public class MainActivity extends Activity {
 
         }
     }
+
+
 
 
 
@@ -353,13 +384,17 @@ public class MainActivity extends Activity {
                     name.setText(place.getName());
                 }
                 if(null != vicinity) {
-
-                    //todo change back to vicinity
-                    vicinity.setText(Integer.toString(place.getVRating()));
+                    vicinity.setText(place.getVicinity());
                 }
             }
+
+
             return row;
         }
+
+
+
+
     }
 
     // Pulls health inspection data from API
@@ -367,13 +402,13 @@ public class MainActivity extends Activity {
 
         @Override
         protected String doInBackground(String... args) {
-  /*          HttpClient httpclient = new DefaultHttpClient();
+            HttpClient httpclient = new DefaultHttpClient();
             HttpResponse hresponse;
             String responseString = null;
             try {
                 hresponse = httpclient.execute(new HttpGet(args[0]));
                 StatusLine statusLine = hresponse.getStatusLine();
-                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     hresponse.getEntity().writeTo(out);
                     out.close();
@@ -389,37 +424,6 @@ public class MainActivity extends Activity {
                 Log.e("ERROR", e.getMessage());
             }
             return responseString;
-    */
-
-            StringBuilder response  = new StringBuilder();
-            String surl = args[0];
-            URL url = null;
-            try {
-                url = new URL(surl);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            HttpURLConnection httpconn = null;
-            try {
-                httpconn = (HttpURLConnection)url.openConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                if (httpconn.getResponseCode() == HttpURLConnection.HTTP_OK)
-                {
-                    BufferedReader input = new BufferedReader(new InputStreamReader(httpconn.getInputStream()),8192);
-                    String strLine = null;
-                    while ((strLine = input.readLine()) != null)
-                    {
-                        response.append(strLine);
-                    }
-                    input.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return response.toString();
 
 
         }
@@ -452,7 +456,7 @@ public class MainActivity extends Activity {
                         Node violationText = nodeElement.getElementsByTagName("standard_order_text").item(0);
                         Node codeViolation = nodeElement.getElementsByTagName("code_section").item(0);
                         Node critical = nodeElement.getElementsByTagName("critical").item(0);
-/*
+
                         violation.setName(name.getTextContent());
                         violation.setAddress(address.getTextContent());
                         violation.setDate(date.getTextContent());
@@ -460,7 +464,7 @@ public class MainActivity extends Activity {
                         violation.setViolationText(violationText.getTextContent());
                         violation.setCodeViolation(codeViolation.getTextContent());
                         violation.setCritial(critical.getTextContent());
-*/
+
                     }
                 }
 

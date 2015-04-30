@@ -10,6 +10,8 @@
     <string name="humidity">Humidity:</string>
     <string name="pressure">Pressure:</string>
     <string name="weather">Weather</string>
+    <string name="item_vicinity">vicinity</string>
+    <string name="item_name">Name</string>
 
     <string name="httptestlist_textview">Please Wait...</string>
 
