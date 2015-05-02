@@ -6,7 +6,7 @@ import java.util.ArrayList;
  * Created by Toby on 5/2/2015.
  */
 public class CurrentViolations {
-    private ArrayList<Violation> violations;
+    public static ArrayList<Violation> violations;
 
     public static void add(Violation v){violations.add(v);}
     public Violation get(int i){
@@ -15,6 +15,6 @@ public class CurrentViolations {
     public int size(){
        return violations.size();
     }
-    public void start(){violations = null;}
-
+    public static void start(){violations = new ArrayList<Violation>();}
+    public static ArrayList<Violation> all() {return violations;}
 }

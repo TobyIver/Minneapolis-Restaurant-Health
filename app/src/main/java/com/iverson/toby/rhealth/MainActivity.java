@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
     private StringBuilder queryGoogle = new StringBuilder();
     private StringBuilder queryHealth = new StringBuilder();
     public ArrayList<Place> places = new ArrayList<Place>();
-    public Place placeItem = new Place();
+
     private ArrayList<Integer> placeRatings = new ArrayList<Integer>();
 
     private ListView listView;
@@ -117,6 +117,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        CurrentViolations.start();
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.httptestlist);
@@ -268,11 +269,11 @@ public class MainActivity extends Activity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int pos,
                                             long id) {
-                         placeItem = places.get(pos);
+                         CurrentPlace.place = places.get(pos);
                         setContentView(R.layout.item_selected);
 
-                        // reformating name for use in CurrentViolations
-                        String pname = placeItem.getName();
+                        // reformating name for use in CurrentViolations.v
+                        String pname = CurrentPlace.place.getName();
                         pname = pname.toUpperCase();
 
                         // running name violation query
@@ -284,7 +285,7 @@ public class MainActivity extends Activity {
                         String qHealth = queryHealth.toString();
                         qHealth = qHealth.replaceAll(" ", "%20");
                         //todo more validation
-                        new HealthAPI().execute(qHealth);
+                        new HealthCompare().execute(qHealth);
 
                     }
                 });
@@ -376,12 +377,12 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-            violations = new ArrayList<>();
+            CurrentViolations.start();
             JSONObject jsonObject = null;
             try {
                 //pulling information out of Health JSON
                 JSONArray jarray = new JSONArray(result);
-                placeItem.setVRating(101);
+                CurrentPlace.place.setVRating(101);
                 for (int i = 0; i < jarray.length(); i++) {
                     JSONObject j = jarray.getJSONObject(i);
 
@@ -394,7 +395,7 @@ public class MainActivity extends Activity {
                     String violationText = j.getString("standard_order_text");
 
                     //verify violation results to prevent errors
-                    String paddress = placeItem.getVicinity();
+                    String paddress = CurrentPlace.place.getVicinity();
                     paddress = paddress.toUpperCase();
                     paddress = paddress.substring(0, paddress.indexOf(" "));
                     String vaddress = address.substring(0, address.indexOf(" "));
@@ -417,9 +418,9 @@ public class MainActivity extends Activity {
                             r = r * 3;
                         }
                         violation.setRating(r);
-                        placeItem.setVRating(placeItem.getVRating() - r);
+                        CurrentPlace.place.setVRating(CurrentPlace.place.getVRating() - r);
 
-                        violations.add(violation);
+                        CurrentViolations.add(violation);
                     }
                 }
 
@@ -433,11 +434,11 @@ public class MainActivity extends Activity {
             TextView itemRating = (TextView) findViewById(R.id.item_rating);
             TextView itemNegative = (TextView) findViewById(R.id.item_negative);
 
-            itemRating.setText(Float.toString(placeItem.getRating()) + "/5 Google Rating");
-            itemName.setText(placeItem.getName());
-            itemVicinity.setText(placeItem.getVicinity());
-            itemVRating.setText(Integer.toString(placeItem.getVRating()) + "/100 Health Score");
-            if(placeItem.getVRating() < 0){
+            itemRating.setText(Float.toString(CurrentPlace.place.getRating()) + "/5 Google Rating");
+            itemName.setText(CurrentPlace.place.getName());
+            itemVicinity.setText(CurrentPlace.place.getVicinity());
+            itemVRating.setText(Integer.toString(CurrentPlace.place.getVRating()) + "/100 Health Score");
+            if(CurrentPlace.place.getVRating() < 0){
                 itemNegative.setText("Yes negative numbers are bad");
             }
             Button clickButton = (Button) findViewById(R.id.violations_button);
@@ -450,7 +451,7 @@ public class MainActivity extends Activity {
 
 
 
-                    ViolationAdapter violationAdapter = new ViolationAdapter(MainActivity.this, R.layout.activity_main, violations);
+                    ViolationAdapter violationAdapter = new ViolationAdapter(MainActivity.this, R.layout.activity_main, CurrentViolations.all());
                     violationView = (ListView)findViewById(R.id.violation_listview);
                     violationView.setAdapter(violationAdapter);
 
@@ -474,7 +475,7 @@ public class MainActivity extends Activity {
                 public void onClick(View v) {
 
 
-                    float[] geometry =  placeItem.getGeometry();
+                    float[] geometry =  CurrentPlace.place.getGeometry();
 
                     String uri = String.format(Locale.ENGLISH, "geo:"+ geometry[0] + "," + geometry[1]);
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
