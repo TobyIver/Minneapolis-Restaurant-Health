@@ -11,7 +11,7 @@
         />
 
     <TextView android:id="@+id/item_vicinity"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
 
@@ -24,13 +24,13 @@
         />
 
     <TextView android:id="@+id/item_vrating"
-        android:textSize="36sp"
+        android:textSize="34sp"
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         />
     <TextView android:id="@+id/item_negative"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,5 +48,11 @@
         android:layout_height="wrap_content"
         android:text="Show on map"
         android:id="@+id/map_button" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Return to list"
+        android:id="@+id/list_button" />
+
 
 </LinearLayout>

@@ -19,7 +19,7 @@
         android:text="violation code"/>
 
     <TextView android:id="@+id/v_text"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
