@@ -29,6 +29,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -59,19 +62,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends Activity {
 
-    //database Violation names from helper
-    private static final String DB_NAME = MySQLiteHelper.DATABASE_NAME;
-    private static final String TABLE_NAME = MySQLiteHelper.TABLE_Name;
-    private static final String vName = MySQLiteHelper.COLUMN_Name;
-    private static final String vAdd = MySQLiteHelper.COLUMN_Address;
-    private static final String vDate = MySQLiteHelper.COLUMN_Date;
-    private static final String vRisk = MySQLiteHelper.COLUMN_RiskLevel;
-    private static final String vCode = MySQLiteHelper.COLUMN_CodeViolation;
-    private static final String vCodeText = MySQLiteHelper.COLUMN_ViolationText;
-    private static final String vCritical = MySQLiteHelper.COLUMN_Critical;
-    private static final String v_id = MySQLiteHelper.COLUMN_ID;
-    private static final String vRating = MySQLiteHelper.COLUMN_Rating;
-    private SQLiteDatabase database;
+
 
     private ViolationDataSource datasource;
 
@@ -95,6 +86,9 @@ public class MainActivity extends Activity {
     MyLocation.LocationResult locationResult;
     ProgressDialog progressDialog = null;
     Context context ;
+    public int xrating;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,8 +110,8 @@ public class MainActivity extends Activity {
         };
 
         //Todo testing GPS cords
-        latitude = String.valueOf(44.9757011);
-        longitude = String.valueOf(-93.2728672);
+        latitude = String.valueOf(44.9157615);
+        longitude = String.valueOf(-93.2629201);
 
 
         MyRunnable myRun = new MyRunnable();
@@ -162,16 +156,6 @@ public class MainActivity extends Activity {
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
             assert result;
-
-/*
-            queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
-            queryGoogle.append("location=" +  latitude + "," + longitude + "&");
-            queryGoogle.append("radius=" + radius + "&");
-            queryGoogle.append("types=" + type + "&");
-            queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
-            queryGoogle.append("key=" + APIKEY);
-            new QueryGooglePlaces().execute(queryGoogle.toString());
-            */
         }
     }
 
@@ -179,7 +163,7 @@ public class MainActivity extends Activity {
      * Based on: http://stackoverflow.com/questions/3505930
      */
     private class QueryGooglePlaces extends AsyncTask<String, String, String> {
-
+        //getting the google places API XML
         @Override
         protected String doInBackground(String... args) {
 
@@ -205,10 +189,8 @@ public class MainActivity extends Activity {
                 Log.e("ERROR", e.getMessage());
             }
             return responseString;
-
-
         }
-
+        // parses the xml into Places
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
@@ -248,73 +230,10 @@ public class MainActivity extends Activity {
                         place.setReference(reference.getTextContent());
                         place.setGeometry(geometry);
                         place.setTypes(types);
-                        //places.add(place);
-
-
-
-                        // reformating name for use in violations
-                        String pname = place.getName();
-                        pname = pname.toUpperCase();
-
-                        // running name violation query
-                        queryHealth = new StringBuilder();
-                        queryHealth.append("http://communities.socrata.com/resource/nzdy-gqv2.xml");
-                        queryHealth.append("?$where=starts_with(name_of_business,'");
-                        queryHealth.append(pname + "')");
-
-                        String qHealth = queryHealth.toString();
-                        qHealth = qHealth.replaceAll(" ", "%20");
-
-
-
-
-
-
-
-
-                        //verify violation results to prevent errors
-                        String paddress = place.getVicinity();
-                        paddress = paddress.toUpperCase();
-                        paddress= paddress.substring(0, paddress.indexOf(" "));
-
-
-                        for (int ii = 0; ii > violations.size(); ii++) {
-                            Violation v = violations.get(ii);
-                            String vaddress = v.getAddress();
-                            vaddress = vaddress.substring(0, vaddress.indexOf(" "));
-                            if ( v.getAddress() != vaddress){
-                                violations.remove(ii);
-                                ii = ii-1;
-                            }
-
-                        }
-
-
-
-                        // Rates the violations for location
-                        int xrating = 100;
-
-                        for (int ii = 0; ii > violations.size(); ii++) {
-                                Violation v = violations.get(ii);
-                                int r = 0;
-                                r = 2 * (4 - Integer.parseInt(v.getRiskLevel()));  //risk levels 1-3, 1 being worse
-                                if (v.getCritical() == "Yes") {
-                                    r = r * 5;
-                                }
-                                xrating = xrating - r;
-                        }
-                        place.setVRating(xrating);
-                        //saves place
+                        place.setIdForV(i);
                         places.add(place);
-
-
-
-
-
                     }
                 }
-
-
 
                PlaceAdapter placeAdapter = new PlaceAdapter(MainActivity.this, R.layout.activity_main, places);
                 listView = (ListView)findViewById(R.id.httptestlist_listview);
@@ -324,17 +243,35 @@ public class MainActivity extends Activity {
                     public void onItemClick(AdapterView<?> parent, View view, int pos,
                                             long id) {
                         //int position = places.size() - pos -1;
-                         placeItem = places.get(pos-1);
+                         placeItem = places.get(pos);
+                        setContentView(R.layout.item_selected);
 
                         //TextView itemName = (TextView) findViewById(R.id.item_name);
                         //TextView itemVicinity = (TextView) findViewById(R.id.item_vicinity);
                         //TextView itemVRating = (TextView) findViewById(R.id.item_vrating);
 
 
-                        //itemName.setText(placeItem.getName());
-                        //itemVicinity.setText(placeItem.getVicinity());
 
-                        setContentView(R.layout.item_selected);
+
+                        // reformating name for use in violations
+                        String pname = placeItem.getName();
+                        pname = pname.toUpperCase();
+
+                        // running name violation query
+                        queryHealth = new StringBuilder();
+                        queryHealth.append("http://communities.socrata.com/resource/nzdy-gqv2.json");
+                        queryHealth.append("?$where=starts_with(name_of_business,'");
+                        queryHealth.append(pname + "')");
+
+                        String qHealth = queryHealth.toString();
+                        qHealth = qHealth.replaceAll(" ", "%20");
+                        //todo more validation
+                        new HealthCompare().execute(qHealth);
+
+                       // placeItem.setVRating(xrating);
+
+
+
 
 
                     }
@@ -397,8 +334,9 @@ public class MainActivity extends Activity {
 
     }
 
+
     // Pulls health inspection data from API
-    public class HealthCompare extends AsyncTask<String, String, String>  {
+    public class HealthCompare extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... args) {
@@ -431,54 +369,78 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-             violations = new ArrayList<>();
-
-
+            violations = new ArrayList<>();
+            JSONObject jsonObject = null;
             try {
-                Document xmlResult = MainActivity.loadXMLFromString(result);//Might have  to move load
-                NodeList nodeList1 =  xmlResult.getElementsByTagName("row");
-                Node node1 = nodeList1.item(0);
-                Element nodeElement1 = (Element) node1;
-                Node node2 = nodeElement1.getElementsByTagName("row").item(0);
-                NodeList nodeList2 = node2.getChildNodes();
-                //row nested in row......
+                //pulling information out of Health JSON
+                JSONArray jarray = new JSONArray(result);
+                 xrating = 100;
+                placeItem.setVRating(101);
+                for (int i = 0; i < jarray.length(); i++) {
+                    JSONObject j = jarray.getJSONObject(i);
 
+                    String date = j.getString("date_of_inspection");
+                    String critical = j.getString("critical");
+                    String vname = j.getString("name_of_business");
+                    String codeViolation = j.getString("code_section");
+                    String riskLevel = j.getString("risk_level");
+                    String address = j.getString("license_address");
+                    String violationText = j.getString("standard_order_text");
 
-                for(int i = 0, length = nodeList2.getLength(); i < length; i++) {
-                    Node node = nodeList2.item(i);
-                    if (node.getNodeType() == Node.ELEMENT_NODE) {
-                        Element nodeElement = (Element) node;
+                    //verify violation results to prevent errors
+                    String paddress = placeItem.getVicinity();
+                    paddress = paddress.toUpperCase();
+                    paddress = paddress.substring(0, paddress.indexOf(" "));
+                    String vaddress = address.substring(0, address.indexOf(" "));
+
+                    if (vaddress.equals(paddress)) {
                         Violation violation = new Violation();
-                        Node name = nodeElement.getElementsByTagName("name_of_business").item(0);
-                        Node address = nodeElement.getElementsByTagName("license_address").item(0);
-                        Node date = nodeElement.getElementsByTagName("date_of_inspection").item(0);
-                        Node riskLevel = nodeElement.getElementsByTagName("risk_level").item(0);
-                        Node violationText = nodeElement.getElementsByTagName("standard_order_text").item(0);
-                        Node codeViolation = nodeElement.getElementsByTagName("code_section").item(0);
-                        Node critical = nodeElement.getElementsByTagName("critical").item(0);
+                        violation.setName(vname);
+                        violation.setAddress(address);
+                        violation.setDate(date);
+                        violation.setRiskLevel(riskLevel);
+                        violation.setViolationText(violationText);
+                        violation.setCodeViolation(codeViolation);
+                        violation.setCritial(critical);
 
-                        violation.setName(name.getTextContent());
-                        violation.setAddress(address.getTextContent());
-                        violation.setDate(date.getTextContent());
-                        violation.setRiskLevel(riskLevel.getTextContent());
-                        violation.setViolationText(violationText.getTextContent());
-                        violation.setCodeViolation(codeViolation.getTextContent());
-                        violation.setCritial(critical.getTextContent());
 
+                        // adding risk level ro rating
+                        int r = 0;
+                        r = 2 * (4 - Integer.parseInt(riskLevel));  //risk levels 1-3, 1 being worse
+                        if (critical.equals("Yes")) {
+                            r = r * 3;
+                        }
+                        xrating = xrating - r;
+
+
+                        placeItem.setVRating(placeItem.getVRating() - r);
+
+                        violations.add(violation);
                     }
                 }
 
-            } catch (Exception e) {
-                Log.e("ERROR here", e.getMessage());
+               Toast.makeText(getApplicationContext(), Integer.toString(xrating), Toast.LENGTH_SHORT).show();
+
+
+
+
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
 
+            TextView itemName = (TextView) findViewById(R.id.item_name);
+            TextView itemVicinity = (TextView) findViewById(R.id.item_vicinity);
+            TextView itemVRating = (TextView) findViewById(R.id.item_vrating);
+            TextView itemRating = (TextView) findViewById(R.id.item_rating);
+            String vr = Integer.toString(placeItem.getVRating());
+
+            itemRating.setText(Float.toString(placeItem.getRating()));
+            itemName.setText(placeItem.getName());
+            itemVicinity.setText(placeItem.getVicinity());
+            itemVRating.setText(vr);
 
         }
     }
-
-
-
-
 
 
     private class MyLocationListener implements LocationListener {

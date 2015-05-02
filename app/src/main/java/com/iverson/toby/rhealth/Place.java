@@ -14,7 +14,13 @@ public class Place {
     public String reference;
     public String[] types;
     public int violationRating;
+    public int idForV;
 
+    public int getIdForV() {return idForV;}
+
+    public void setIdForV(int idForV) {
+        this.idForV = idForV;
+    }
 
     public String getVicinity() {
         return vicinity;
