@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView android:id="@+id/v_date"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="date"/>
+
+    <TextView android:id="@+id/v_code"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="violation code"/>
+
+    <TextView android:id="@+id/v_text"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="violation description"/>
+
+    <TextView android:id="@+id/v_risk"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="risk level"/>
+
+    <TextView android:id="@+id/v_critical"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="is it critical"/>
+
+    <TextView android:id="@+id/v_rating"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="rating"/>
+
+</LinearLayout>

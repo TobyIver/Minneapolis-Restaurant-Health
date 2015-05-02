@@ -3,21 +3,44 @@ package com.iverson.toby.rhealth;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.UserHandle;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +64,10 @@ import org.xml.sax.InputSource;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,6 +80,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -64,9 +92,6 @@ public class MainActivity extends Activity {
 
 
 
-    private ViolationDataSource datasource;
-
-    private StringBuilder queryViolation = new StringBuilder();
 
     //GPS and Google Places variables
     private String latitude;
@@ -80,8 +105,9 @@ public class MainActivity extends Activity {
     public ArrayList<Place> places = new ArrayList<Place>();
     public Place placeItem = new Place();
     private ArrayList<Integer> placeRatings = new ArrayList<Integer>();
-    private ArrayList<Violation> violations = new ArrayList<Violation>();
+
     private ListView listView;
+    private ListView violationView;
     MyLocation myLocation = new MyLocation();
     MyLocation.LocationResult locationResult;
     ProgressDialog progressDialog = null;
@@ -197,7 +223,7 @@ public class MainActivity extends Activity {
             try {
                 Document xmlResult = loadXMLFromString(result);
                 NodeList nodeList =  xmlResult.getElementsByTagName("result");
-                for(int i = 0, length = nodeList.getLength(); i < length; i++) { //todo change back
+                for(int i = 0, length = nodeList.getLength(); i < length; i++) {
                     Node node = nodeList.item(i);
                     if(node.getNodeType() == Node.ELEMENT_NODE) {
                         Element nodeElement = (Element) node;
@@ -242,18 +268,10 @@ public class MainActivity extends Activity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int pos,
                                             long id) {
-                        //int position = places.size() - pos -1;
                          placeItem = places.get(pos);
                         setContentView(R.layout.item_selected);
 
-                        //TextView itemName = (TextView) findViewById(R.id.item_name);
-                        //TextView itemVicinity = (TextView) findViewById(R.id.item_vicinity);
-                        //TextView itemVRating = (TextView) findViewById(R.id.item_vrating);
-
-
-
-
-                        // reformating name for use in violations
+                        // reformating name for use in CurrentViolations
                         String pname = placeItem.getName();
                         pname = pname.toUpperCase();
 
@@ -266,13 +284,7 @@ public class MainActivity extends Activity {
                         String qHealth = queryHealth.toString();
                         qHealth = qHealth.replaceAll(" ", "%20");
                         //todo more validation
-                        new HealthCompare().execute(qHealth);
-
-                       // placeItem.setVRating(xrating);
-
-
-
-
+                        new HealthAPI().execute(qHealth);
 
                     }
                 });
@@ -324,13 +336,8 @@ public class MainActivity extends Activity {
                     vicinity.setText(place.getVicinity());
                 }
             }
-
-
             return row;
         }
-
-
-
 
     }
 
@@ -374,7 +381,6 @@ public class MainActivity extends Activity {
             try {
                 //pulling information out of Health JSON
                 JSONArray jarray = new JSONArray(result);
-                 xrating = 100;
                 placeItem.setVRating(101);
                 for (int i = 0; i < jarray.length(); i++) {
                     JSONObject j = jarray.getJSONObject(i);
@@ -404,25 +410,18 @@ public class MainActivity extends Activity {
                         violation.setCritial(critical);
 
 
-                        // adding risk level ro rating
+                        // adding risk level to rating
                         int r = 0;
                         r = 2 * (4 - Integer.parseInt(riskLevel));  //risk levels 1-3, 1 being worse
                         if (critical.equals("Yes")) {
                             r = r * 3;
                         }
-                        xrating = xrating - r;
-
-
+                        violation.setRating(r);
                         placeItem.setVRating(placeItem.getVRating() - r);
 
                         violations.add(violation);
                     }
                 }
-
-               Toast.makeText(getApplicationContext(), Integer.toString(xrating), Toast.LENGTH_SHORT).show();
-
-
-
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -432,15 +431,118 @@ public class MainActivity extends Activity {
             TextView itemVicinity = (TextView) findViewById(R.id.item_vicinity);
             TextView itemVRating = (TextView) findViewById(R.id.item_vrating);
             TextView itemRating = (TextView) findViewById(R.id.item_rating);
-            String vr = Integer.toString(placeItem.getVRating());
+            TextView itemNegative = (TextView) findViewById(R.id.item_negative);
 
-            itemRating.setText(Float.toString(placeItem.getRating()));
+            itemRating.setText(Float.toString(placeItem.getRating()) + "/5 Google Rating");
             itemName.setText(placeItem.getName());
             itemVicinity.setText(placeItem.getVicinity());
-            itemVRating.setText(vr);
+            itemVRating.setText(Integer.toString(placeItem.getVRating()) + "/100 Health Score");
+            if(placeItem.getVRating() < 0){
+                itemNegative.setText("Yes negative numbers are bad");
+            }
+            Button clickButton = (Button) findViewById(R.id.violations_button);
+            clickButton.setOnClickListener( new View.OnClickListener() {
 
+                @Override
+                public void onClick(View v) {
+
+                    setContentView(R.layout.violation_layout);
+
+
+
+                    ViolationAdapter violationAdapter = new ViolationAdapter(MainActivity.this, R.layout.activity_main, violations);
+                    violationView = (ListView)findViewById(R.id.violation_listview);
+                    violationView.setAdapter(violationAdapter);
+
+                    Button returnButton = (Button) findViewById(R.id.back_button);
+                    returnButton.setOnClickListener(new View.OnClickListener() {
+
+                        @Override
+                        public void onClick(View v) {
+                            setContentView(R.layout.item_selected);
+
+                        }
+                    });
+
+
+                };
+            });
+            Button mapButton = (Button) findViewById(R.id.map_button);
+            mapButton.setOnClickListener( new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+
+
+                    float[] geometry =  placeItem.getGeometry();
+
+                    String uri = String.format(Locale.ENGLISH, "geo:"+ geometry[0] + "," + geometry[1]);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                    startActivity(intent);
+
+                    Toast.makeText(getApplicationContext(), "loading map " + uri,
+                            Toast.LENGTH_LONG).show();
+
+                }
+            });
         }
     }
+
+    private class ItemSelected {
+
+
+
+    }
+
+
+
+    private class ViolationAdapter extends ArrayAdapter<Violation> {
+        public Context context;
+        public int layoutResourceId;
+        public ArrayList<Violation> violations;
+
+        public ViolationAdapter(Context context, int layoutResourceId, ArrayList<Violation> violations) {
+            super(context, layoutResourceId, violations);
+            this.layoutResourceId = layoutResourceId;
+            this.violations = violations;
+        }
+
+        @Override
+        public View getView(int rowIndex, View convertView, ViewGroup parent) {
+            View row = convertView;
+            if(null == row) {
+                LayoutInflater layout = (LayoutInflater)getSystemService(
+                        Context.LAYOUT_INFLATER_SERVICE
+                );
+                row = layout.inflate(R.layout.violation_list, null);
+            }
+            Violation violation = violations.get(rowIndex);
+
+            if(null != violation) {
+                TextView date = (TextView) row.findViewById(R.id.v_date);
+                TextView code = (TextView) row.findViewById(R.id.v_code);
+                TextView text = (TextView) row.findViewById(R.id.v_text);
+                TextView risk = (TextView) row.findViewById(R.id.v_risk);
+                TextView critical = (TextView) row.findViewById(R.id.v_critical);
+                TextView rating = (TextView) row.findViewById(R.id.v_rating);
+
+                String d =  violation.getDate();
+                d = d.substring(0, d.indexOf("T"));
+
+                date.setText("Inspection date: " + d);
+                code.setText("Violation: " + violation.getCodeViolation());
+                text.setText(violation.getViolationText());
+                risk.setText("Risk level: " + violation.getRiskLevel());
+                critical.setText("Is violation critical?: " + violation.getCritical());
+                rating.setText("Point penalty to score: " + Integer.toString(violation.getRating()));
+
+
+            }
+            return row;
+        }
+
+    }
+
 
 
     private class MyLocationListener implements LocationListener {
