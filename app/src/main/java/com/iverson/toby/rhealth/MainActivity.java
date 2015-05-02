@@ -350,14 +350,15 @@ public class MainActivity extends Activity {
 
             // reformating name for use in CurrentViolations.v
             String pname = CurrentPlace.place.getName();
-
-
-
+            //getting rid of special characters
+            pname = pname.toUpperCase();
+            pname = pname.replaceAll("&", "%26");
+            pname = pname.replaceAll("!", "%21");
+            if (pname.contains("'")) {
+                pname = pname.substring(0, pname.indexOf("'"));
+            }
             new HealthAPI().execute(pname);
-
-
-
-        }
+       }
     });
 
 
@@ -421,6 +422,7 @@ public class MainActivity extends Activity {
             this.violations = violations;
         }
 
+
         @Override
         public View getView(int rowIndex, View convertView, ViewGroup parent) {
             View row = convertView;
@@ -463,16 +465,12 @@ public class MainActivity extends Activity {
         @Override
         protected String doInBackground(String... args) {
 
-            //getting rid of special characters
-            String pname = args[0].toUpperCase();
-            pname = pname.replaceAll("&", "%26");
-            pname = pname.replaceAll("'", "%27");
-            pname = pname.replaceAll("!", "%21");
+
             // running name violation query
             queryHealth = new StringBuilder();
             queryHealth.append("http://communities.socrata.com/resource/nzdy-gqv2.json");
             queryHealth.append("?$where=starts_with(name_of_business,'");
-            queryHealth.append(pname + "')");
+            queryHealth.append(args[0] + "')");
 
             String qHealth = queryHealth.toString();
             qHealth = qHealth.replaceAll(" ", "%20");
