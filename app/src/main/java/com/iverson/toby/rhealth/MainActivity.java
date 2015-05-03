@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -65,29 +66,21 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends Activity {
 
-
-
-
     //GPS and Google Places variables
     private String latitude;
     private String longitude;
-    private String provider;
     private final String APIKEY = "AIzaSyAMfjDmxGTWke6GgwZS0RbG3zg1Jjl1mtg";
     private final int radius = 2000;
     private String type = "food";
     private StringBuilder queryGoogle = new StringBuilder();
     private StringBuilder queryHealth = new StringBuilder();
     public ArrayList<Place> places = new ArrayList<Place>();
-
-    private ArrayList<Integer> placeRatings = new ArrayList<Integer>();
-
     private ListView listView;
     private ListView violationView;
     MyLocation myLocation = new MyLocation();
     MyLocation.LocationResult locationResult;
     ProgressDialog progressDialog = null;
     Context context ;
-    public int xrating;
 
 
     @Override
@@ -96,6 +89,41 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.httptestlist);
+
+        final EditText restSearch = (EditText) findViewById(R.id.search_field);
+        Button btn = (Button) findViewById(R.id.search_button);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                String psearch = restSearch.getText().toString();
+                //getting rid of special characters
+                psearch = psearch.toUpperCase();
+                psearch = psearch.replaceAll(" ", "%20");
+                psearch = psearch.replaceAll("&", "%26");
+                psearch = psearch.replaceAll("!", "%21");
+                if (psearch.contains("'")) {
+                    psearch = psearch.substring(0, psearch.indexOf("'"));
+                }
+
+                progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
+                        "Please wait...", true);
+
+                queryGoogle.append("https://maps.googleapis.com/maps/api/place/textsearch/xml?");
+                queryGoogle.append("location=44.9756997,-93.2664641&");
+                queryGoogle.append("radius=10000&");
+                queryGoogle.append("types=" + type + "&");
+                queryGoogle.append("query"+ psearch + "&");
+                //queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
+                queryGoogle.append("key=" + APIKEY);
+
+                setContentView(R.layout.httptestlist);
+
+                new QueryGooglePlaces().execute(queryGoogle.toString());
+
+            }
+        });
+
+
 
         LocationManager locationManager = (LocationManager) getSystemService(
                 Context.LOCATION_SERVICE);
@@ -133,6 +161,8 @@ public class MainActivity extends Activity {
 
 
     }
+
+
 
     public static Document loadXMLFromString(String xml) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
