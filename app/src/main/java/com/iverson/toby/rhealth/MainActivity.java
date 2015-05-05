@@ -88,14 +88,19 @@ public class MainActivity extends Activity {
         CurrentViolations.start();
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.httptestlist);
+        setContentView(R.layout.open);
 
-        final EditText restSearch = (EditText) findViewById(R.id.search_field);
-        Button btn = (Button) findViewById(R.id.search_button);
+        final EditText restSearch = (EditText) findViewById(R.id.editsearch);
+        Button sbtn = (Button) findViewById(R.id.search_button);
+        Button lbtn = (Button) findViewById(R.id.location_button);
 
-        btn.setOnClickListener(new View.OnClickListener() {
+        sbtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 String psearch = restSearch.getText().toString();
+
+
+
+                setContentView(R.layout.httptestlist);
                 //getting rid of special characters
                 psearch = psearch.toUpperCase();
                 psearch = psearch.replaceAll(" ", "%20");
@@ -105,58 +110,63 @@ public class MainActivity extends Activity {
                     psearch = psearch.substring(0, psearch.indexOf("'"));
                 }
 
-                progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
-                        "Please wait...", true);
 
+
+                queryGoogle = new StringBuilder();
                 queryGoogle.append("https://maps.googleapis.com/maps/api/place/textsearch/xml?");
                 queryGoogle.append("location=44.9756997,-93.2664641&");
                 queryGoogle.append("radius=10000&");
                 queryGoogle.append("types=" + type + "&");
-                queryGoogle.append("query"+ psearch + "&");
+                queryGoogle.append("query="+ psearch + "&");
                 //queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
                 queryGoogle.append("key=" + APIKEY);
 
-                setContentView(R.layout.httptestlist);
+                new SearchGooglePlaces().execute(queryGoogle.toString());
 
+            }
+        });
+
+        lbtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                setContentView(R.layout.httptestlist);
+                LocationManager locationManager = (LocationManager) getSystemService(
+                        Context.LOCATION_SERVICE);
+                LocationListener myLocationListener = new MyLocationListener();
+
+                locationResult = new MyLocation.LocationResult() {
+                    @Override
+                    public void gotLocation(Location location) {
+                        latitude = String.valueOf(location.getLatitude());
+                        longitude = String.valueOf(location.getLongitude());
+                        progressDialog.dismiss();
+                        new GetCurrentLocation().execute(latitude, longitude);
+                    }
+                };
+
+                //Enter lat lon for testing
+                latitude = String.valueOf(44.9157615);
+                longitude = String.valueOf(-93.2629201);
+
+
+                MyRunnable myRun = new MyRunnable();
+                myRun.run();
+
+                progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
+                        "Please wait...", true);
+                queryGoogle = new StringBuilder();
+                queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
+                queryGoogle.append("location=" +  latitude + "," + longitude + "&");
+                queryGoogle.append("radius=" + radius + "&");
+                queryGoogle.append("types=" + type + "&");
+                queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
+                queryGoogle.append("key=" + APIKEY);
                 new QueryGooglePlaces().execute(queryGoogle.toString());
 
             }
         });
 
 
-
-        LocationManager locationManager = (LocationManager) getSystemService(
-                Context.LOCATION_SERVICE);
-        LocationListener myLocationListener = new MyLocationListener();
-
-        locationResult = new MyLocation.LocationResult() {
-            @Override
-            public void gotLocation(Location location) {
-                latitude = String.valueOf(location.getLatitude());
-                longitude = String.valueOf(location.getLongitude());
-                progressDialog.dismiss();
-                new GetCurrentLocation().execute(latitude, longitude);
-            }
-        };
-
-        //Todo testing GPS cords
-        latitude = String.valueOf(44.9157615);
-        longitude = String.valueOf(-93.2629201);
-
-
-        MyRunnable myRun = new MyRunnable();
-        myRun.run();
-
-        progressDialog = ProgressDialog.show(MainActivity.this, "Finding your location",
-                "Please wait...", true);
-
-        queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
-        queryGoogle.append("location=" +  latitude + "," + longitude + "&");
-        queryGoogle.append("radius=" + radius + "&");
-        queryGoogle.append("types=" + type + "&");
-        queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
-        queryGoogle.append("key=" + APIKEY);
-        new QueryGooglePlaces().execute(queryGoogle.toString());
 
 
 
@@ -194,6 +204,8 @@ public class MainActivity extends Activity {
     /**
      * Based on: http://stackoverflow.com/questions/3505930
      */
+
+    //used for gps
     private class QueryGooglePlaces extends AsyncTask<String, String, String> {
         //getting the google places API XML
         @Override
@@ -268,6 +280,91 @@ public class MainActivity extends Activity {
                 }
 
             FilLStoreList();
+
+            } catch (Exception e) {
+                Log.e("ERROR", e.getMessage());
+            }
+
+
+        }
+    }
+
+
+//used for search
+    private class SearchGooglePlaces extends AsyncTask<String, String, String> {
+        //getting the google places API XML
+        @Override
+        protected String doInBackground(String... args) {
+
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpResponse response;
+            String responseString = null;
+            try {
+                response = httpclient.execute(new HttpGet(args[0]));
+                StatusLine statusLine = response.getStatusLine();
+                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(out);
+                    out.close();
+                    responseString = out.toString();
+                } else {
+                    //Closes the connection.
+                    response.getEntity().getContent().close();
+                    throw new IOException(statusLine.getReasonPhrase());
+                }
+            } catch (ClientProtocolException e) {
+                Log.e("ERROR", e.getMessage());
+            } catch (IOException e) {
+                Log.e("ERROR", e.getMessage());
+            }
+            return responseString;
+        }
+        // parses the xml into Places
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            try {
+                Document xmlResult = loadXMLFromString(result);
+                NodeList nodeList =  xmlResult.getElementsByTagName("result");
+                for(int i = 0, length = nodeList.getLength(); i < length; i++) {
+                    Node node = nodeList.item(i);
+                    if(node.getNodeType() == Node.ELEMENT_NODE) {
+                        Element nodeElement = (Element) node;
+                        Place place = new Place();
+                        Node name = nodeElement.getElementsByTagName("name").item(0);
+                        Node vicinity = nodeElement.getElementsByTagName("formatted_address").item(0);
+                        Node rating = nodeElement.getElementsByTagName("rating").item(0);
+                        Node reference = nodeElement.getElementsByTagName("reference").item(0);
+                        Node id = nodeElement.getElementsByTagName("id").item(0);
+                        Node geometryElement = nodeElement.getElementsByTagName("geometry").item(0);
+                        NodeList locationElement = geometryElement.getChildNodes();
+                        Element latLngElem = (Element) locationElement.item(1);
+                        Node lat = latLngElem.getElementsByTagName("lat").item(0);
+                        Node lng = latLngElem.getElementsByTagName("lng").item(0);
+                        float[] geometry =  {Float.valueOf(lat.getTextContent()),
+                                Float.valueOf(lng.getTextContent())};
+                        int typeCount = nodeElement.getElementsByTagName("type").getLength();
+                        String[] types = new String[typeCount];
+                        for(int j = 0; j < typeCount; j++) {
+                            types[j] = nodeElement.getElementsByTagName("type").item(j).getTextContent();
+                        }
+                        place.setVicinity(vicinity.getTextContent());
+                        place.setId(id.getTextContent());
+                        place.setName(name.getTextContent());
+                        if(null == rating) {
+                            place.setRating(0.0f);
+                        } else {
+                            place.setRating(Float.valueOf(rating.getTextContent()));
+                        }
+                        place.setReference(reference.getTextContent());
+                        place.setGeometry(geometry);
+                        place.setTypes(types);
+                        place.setIdForV(i);
+                        places.add(place);
+                    }
+                }
+
+                FilLStoreList();
 
             } catch (Exception e) {
                 Log.e("ERROR", e.getMessage());

@@ -6,35 +6,6 @@
 
 
 
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="78dp">
-
-        <EditText
-            android:layout_width="253dp"
-            android:layout_height="wrap_content"
-            android:id="@+id/search_field"
-            android:text="Search"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Places Nearby"
-            android:id="@+id/nearby_title"
-            android:layout_below="@+id/search_button"
-            android:layout_alignParentStart="true" />
-        <Button
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Search"
-            android:id="@+id/search_button"
-            android:layout_gravity="right"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true" />
-        </RelativeLayout>
-
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
