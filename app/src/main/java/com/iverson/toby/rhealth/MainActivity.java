@@ -3,11 +3,7 @@ package com.iverson.toby.rhealth;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -15,12 +11,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.UserHandle;
-import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,32 +39,24 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Locale;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends Activity {
 
-    //GPS and Google Places variables
+
     private String latitude;
     private String longitude;
     private final String APIKEY = "AIzaSyAMfjDmxGTWke6GgwZS0RbG3zg1Jjl1mtg";
     private final int radius = 2000;
     private String type = "food";
     private StringBuilder queryGoogle = new StringBuilder();
-    private StringBuilder queryHealth = new StringBuilder();
     public ArrayList<Place> places = new ArrayList<Place>();
     private ListView listView;
     private ListView violationView;
@@ -88,19 +71,27 @@ public class MainActivity extends Activity {
         CurrentViolations.start();
         super.onCreate(savedInstanceState);
 
+        openMenu();
+
+    }
+//opening page
+    public void  openMenu() {
+
         setContentView(R.layout.open);
 
         final EditText restSearch = (EditText) findViewById(R.id.editsearch);
         Button sbtn = (Button) findViewById(R.id.search_button);
         Button lbtn = (Button) findViewById(R.id.location_button);
 
+
+        // search button
         sbtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 String psearch = restSearch.getText().toString();
 
 
-
                 setContentView(R.layout.httptestlist);
+
                 //getting rid of special characters
                 psearch = psearch.toUpperCase();
                 psearch = psearch.replaceAll(" ", "%20");
@@ -110,26 +101,26 @@ public class MainActivity extends Activity {
                     psearch = psearch.substring(0, psearch.indexOf("'"));
                 }
 
-
-
+                //creating query
                 queryGoogle = new StringBuilder();
                 queryGoogle.append("https://maps.googleapis.com/maps/api/place/textsearch/xml?");
                 queryGoogle.append("location=44.9756997,-93.2664641&");
                 queryGoogle.append("radius=10000&");
                 queryGoogle.append("types=" + type + "&");
-                queryGoogle.append("query="+ psearch + "&");
-                //queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
+                queryGoogle.append("query=" + psearch + "&");
                 queryGoogle.append("key=" + APIKEY);
 
                 new SearchGooglePlaces().execute(queryGoogle.toString());
 
             }
         });
-
+        //location button
         lbtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
+
                 setContentView(R.layout.httptestlist);
+
                 LocationManager locationManager = (LocationManager) getSystemService(
                         Context.LOCATION_SERVICE);
                 LocationListener myLocationListener = new MyLocationListener();
@@ -144,9 +135,9 @@ public class MainActivity extends Activity {
                     }
                 };
 
-                //Enter lat lon for testing
-                latitude = String.valueOf(44.9157615);
-                longitude = String.valueOf(-93.2629201);
+                /*****Enter lat lon for testing*****/
+                //latitude = String.valueOf(44.9157615);
+                //longitude = String.valueOf(-93.2629201);
 
 
                 MyRunnable myRun = new MyRunnable();
@@ -156,7 +147,7 @@ public class MainActivity extends Activity {
                         "Please wait...", true);
                 queryGoogle = new StringBuilder();
                 queryGoogle.append("https://maps.googleapis.com/maps/api/place/nearbysearch/xml?");
-                queryGoogle.append("location=" +  latitude + "," + longitude + "&");
+                queryGoogle.append("location=" + latitude + "," + longitude + "&");
                 queryGoogle.append("radius=" + radius + "&");
                 queryGoogle.append("types=" + type + "&");
                 queryGoogle.append("sensor=true&"); //Must be true if queried from a device with GPS
@@ -167,21 +158,8 @@ public class MainActivity extends Activity {
         });
 
 
-
-
-
     }
 
-
-
-    public static Document loadXMLFromString(String xml) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-
-        InputSource is = new InputSource(new StringReader(xml));
-
-        return builder.parse(is);
-    }
 
     private class GetCurrentLocation extends AsyncTask<Object, String, Boolean> {
 
@@ -205,7 +183,7 @@ public class MainActivity extends Activity {
      * Based on: http://stackoverflow.com/questions/3505930
      */
 
-    //used for gps
+    //gets Google places api from gps
     private class QueryGooglePlaces extends AsyncTask<String, String, String> {
         //getting the google places API XML
         @Override
@@ -239,6 +217,7 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             try {
+                places.clear();
                 Document xmlResult = loadXMLFromString(result);
                 NodeList nodeList =  xmlResult.getElementsByTagName("result");
                 for(int i = 0, length = nodeList.getLength(); i < length; i++) {
@@ -249,7 +228,6 @@ public class MainActivity extends Activity {
                         Node name = nodeElement.getElementsByTagName("name").item(0);
                         Node vicinity = nodeElement.getElementsByTagName("vicinity").item(0);
                         Node rating = nodeElement.getElementsByTagName("rating").item(0);
-                        Node reference = nodeElement.getElementsByTagName("reference").item(0);
                         Node id = nodeElement.getElementsByTagName("id").item(0);
                         Node geometryElement = nodeElement.getElementsByTagName("geometry").item(0);
                         NodeList locationElement = geometryElement.getChildNodes();
@@ -258,11 +236,8 @@ public class MainActivity extends Activity {
                         Node lng = latLngElem.getElementsByTagName("lng").item(0);
                         float[] geometry =  {Float.valueOf(lat.getTextContent()),
                                 Float.valueOf(lng.getTextContent())};
-                        int typeCount = nodeElement.getElementsByTagName("type").getLength();
-                        String[] types = new String[typeCount];
-                        for(int j = 0; j < typeCount; j++) {
-                            types[j] = nodeElement.getElementsByTagName("type").item(j).getTextContent();
-                        }
+
+                        // put elements into array
                         place.setVicinity(vicinity.getTextContent());
                         place.setId(id.getTextContent());
                         place.setName(name.getTextContent());
@@ -271,26 +246,21 @@ public class MainActivity extends Activity {
                         } else {
                             place.setRating(Float.valueOf(rating.getTextContent()));
                         }
-                        place.setReference(reference.getTextContent());
                         place.setGeometry(geometry);
-                        place.setTypes(types);
                         place.setIdForV(i);
                         places.add(place);
                     }
                 }
-
             FilLStoreList();
-
             } catch (Exception e) {
                 Log.e("ERROR", e.getMessage());
             }
-
-
         }
     }
 
 
-//used for search
+//gets Google places api from search string
+    // different types of search returned different labels, needed to make 2 with the slight change
     private class SearchGooglePlaces extends AsyncTask<String, String, String> {
         //getting the google places API XML
         @Override
@@ -324,6 +294,7 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             try {
+                places.clear();
                 Document xmlResult = loadXMLFromString(result);
                 NodeList nodeList =  xmlResult.getElementsByTagName("result");
                 for(int i = 0, length = nodeList.getLength(); i < length; i++) {
@@ -334,7 +305,6 @@ public class MainActivity extends Activity {
                         Node name = nodeElement.getElementsByTagName("name").item(0);
                         Node vicinity = nodeElement.getElementsByTagName("formatted_address").item(0);
                         Node rating = nodeElement.getElementsByTagName("rating").item(0);
-                        Node reference = nodeElement.getElementsByTagName("reference").item(0);
                         Node id = nodeElement.getElementsByTagName("id").item(0);
                         Node geometryElement = nodeElement.getElementsByTagName("geometry").item(0);
                         NodeList locationElement = geometryElement.getChildNodes();
@@ -344,10 +314,7 @@ public class MainActivity extends Activity {
                         float[] geometry =  {Float.valueOf(lat.getTextContent()),
                                 Float.valueOf(lng.getTextContent())};
                         int typeCount = nodeElement.getElementsByTagName("type").getLength();
-                        String[] types = new String[typeCount];
-                        for(int j = 0; j < typeCount; j++) {
-                            types[j] = nodeElement.getElementsByTagName("type").item(j).getTextContent();
-                        }
+
                         place.setVicinity(vicinity.getTextContent());
                         place.setId(id.getTextContent());
                         place.setName(name.getTextContent());
@@ -356,10 +323,9 @@ public class MainActivity extends Activity {
                         } else {
                             place.setRating(Float.valueOf(rating.getTextContent()));
                         }
-                        place.setReference(reference.getTextContent());
                         place.setGeometry(geometry);
-                        place.setTypes(types);
                         place.setIdForV(i);
+
                         places.add(place);
                     }
                 }
@@ -373,10 +339,8 @@ public class MainActivity extends Activity {
 
         }
     }
-
+// shows individual restaurants
     public void FillPlace(){
-
-
         setContentView(R.layout.item_selected);
 
         TextView itemName = (TextView) findViewById(R.id.item_name);
@@ -393,10 +357,6 @@ public class MainActivity extends Activity {
             itemNegative.setText("Yes negative numbers are bad");
         }
 
-
-
-
-
         Button clickButton = (Button) findViewById(R.id.violations_button);
         clickButton.setOnClickListener( new View.OnClickListener() {
 
@@ -404,35 +364,27 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
 
                 setContentView(R.layout.violation_layout);
-
-
-
                 ViolationAdapter violationAdapter = new ViolationAdapter(MainActivity.this, R.layout.activity_main, CurrentViolations.all());
                 violationView = (ListView)findViewById(R.id.violation_listview);
                 violationView.setAdapter(violationAdapter);
-
                 Button returnButton = (Button) findViewById(R.id.back_button);
                 returnButton.setOnClickListener(new View.OnClickListener() {
 
                     @Override
                     public void onClick(View v) {
-
-
                         FillPlace();
-
                     }
                 });
 
 
             };
         });
+        //opens map
         Button mapButton = (Button) findViewById(R.id.map_button);
         mapButton.setOnClickListener( new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-
-
                 float[] geometry =  CurrentPlace.place.getGeometry();
 
                 String uri = String.format(Locale.ENGLISH, "geo:"+ Float.toString(geometry[0]) + "," + Float.toString(geometry[1]));
@@ -466,6 +418,13 @@ public class MainActivity extends Activity {
 
 
     PlaceAdapter placeAdapter = new PlaceAdapter(MainActivity.this, R.layout.activity_main, places);
+        Button nbtn = (Button) findViewById(R.id.new_button);
+        nbtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                openMenu();
+            }
+        });
+
     listView = (ListView)findViewById(R.id.httptestlist_listview);
 
     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -473,7 +432,6 @@ public class MainActivity extends Activity {
         public void onItemClick(AdapterView<?> parent, View view, int pos,
                                 long id) {
             CurrentPlace.place = places.get(pos);
-
 
             // reformating name for use in CurrentViolations.v
             String pname = CurrentPlace.place.getName();
@@ -487,10 +445,7 @@ public class MainActivity extends Activity {
             new HealthAPI().execute(pname);
        }
     });
-
-
     listView.setAdapter(placeAdapter);
-
 }
 
 
@@ -529,7 +484,6 @@ public class MainActivity extends Activity {
             }
             return row;
         }
-
     }
 
 
@@ -591,9 +545,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected String doInBackground(String... args) {
-
-
-            // running name violation query
+    // running name violation query
             queryHealth = new StringBuilder();
             queryHealth.append("http://communities.socrata.com/resource/nzdy-gqv2.json");
             queryHealth.append("?$where=starts_with(name_of_business,'");
@@ -601,7 +553,6 @@ public class MainActivity extends Activity {
 
             String qHealth = queryHealth.toString();
             qHealth = qHealth.replaceAll(" ", "%20");
-
 
             HttpClient httpclient = new DefaultHttpClient();
             HttpResponse hresponse;
@@ -688,6 +639,14 @@ public class MainActivity extends Activity {
         }
     }
 
+    public static Document loadXMLFromString(String xml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+
+        InputSource is = new InputSource(new StringReader(xml));
+
+        return builder.parse(is);
+    }
     private class MyLocationListener implements LocationListener {
 
         @Override

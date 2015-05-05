@@ -11,8 +11,6 @@ public class Place {
     public String id;
     public String name;
     public float rating;
-    public String reference;
-    public String[] types;
     public int violationRating;
     public int idForV;
 
@@ -62,21 +60,6 @@ public class Place {
         this.rating = rating;
     }
 
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
-    }
-
-    public String[] getTypes() {
-        return types;
-    }
-
-    public void setTypes(String[] types) {
-        this.types = types;
-    }
 
     public int getVRating() { return violationRating; }
 
